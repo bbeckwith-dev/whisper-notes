@@ -4,5 +4,7 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.11"
 dependencies = [
+    "anthropic>=0.85.0",
     "openai-whisper>=20250625",
+    "python-dotenv>=1.2.2",
 ]

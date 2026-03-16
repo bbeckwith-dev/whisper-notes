@@ -20,5 +20,8 @@ wheels/
 # Transcription outputs (personal content)
 09-39-11.md
 
+# API keys — never commit these
+.env
+
 # Whisper model cache
 ~/.cache/whisper/
