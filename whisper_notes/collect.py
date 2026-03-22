@@ -26,6 +26,9 @@ class CollectedFiles:
     unsupported: list[SkippedEntry]
 
 
+SKIP_DIRS = {"processed"}
+
+
 def collect_files(input_path: Path) -> CollectedFiles:
     """Collect supported and unsupported files from a path."""
     if input_path.is_file():
@@ -38,6 +41,9 @@ def collect_files(input_path: Path) -> CollectedFiles:
     unsupported = []
     for f in sorted(input_path.rglob("*")):
         if f.is_symlink() or not f.is_file():
+            continue
+        # Skip files inside output directories
+        if SKIP_DIRS & {p.name for p in f.relative_to(input_path).parents}:
             continue
         entry = _classify_file(f)
         if isinstance(entry, FileEntry):

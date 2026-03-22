@@ -1,8 +1,10 @@
 import pytest
+from unittest.mock import MagicMock, patch
 from whisper_notes.format import (
     build_prompt,
-    parse_response,
     compose_output,
+    format_with_claude,
+    parse_response,
     ParsedResponse,
 )
 
@@ -66,10 +68,6 @@ def test_compose_output_document_no_raw():
     )
     output = compose_output(parsed, raw_text=None)
     assert "## Raw Transcription" not in output
-
-
-from unittest.mock import MagicMock, patch
-from whisper_notes.format import format_with_claude
 
 
 def test_format_with_claude_returns_response(sample_claude_response):
