@@ -23,6 +23,9 @@ wheels/
 # API keys — never commit these
 .env
 
+# Personal config (vault names etc.) — copy config.example.json to config.json
+config.json
+
 # Whisper model cache
 ~/.cache/whisper/
 
