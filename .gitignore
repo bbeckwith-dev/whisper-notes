@@ -25,3 +25,6 @@ wheels/
 
 # Whisper model cache
 ~/.cache/whisper/
+
+# Git worktrees
+.worktrees/
