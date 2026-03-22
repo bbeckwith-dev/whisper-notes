@@ -66,3 +66,27 @@ def test_compose_output_document_no_raw():
     )
     output = compose_output(parsed, raw_text=None)
     assert "## Raw Transcription" not in output
+
+
+from unittest.mock import MagicMock, patch
+from whisper_notes.format import format_with_claude
+
+
+def test_format_with_claude_returns_response(sample_claude_response):
+    mock_stream = MagicMock()
+    mock_stream.__enter__ = MagicMock(return_value=mock_stream)
+    mock_stream.__exit__ = MagicMock(return_value=False)
+    mock_stream.text_stream = iter([sample_claude_response])
+
+    mock_client = MagicMock()
+    mock_client.messages.stream.return_value = mock_stream
+
+    with patch("whisper_notes.format.anthropic.Anthropic", return_value=mock_client):
+        result = format_with_claude(
+            raw_text="test input",
+            system_prompt="test prompt",
+            model_id="claude-sonnet-4-6",
+        )
+
+    assert "weightlifting-goals" in result
+    mock_client.messages.stream.assert_called_once()

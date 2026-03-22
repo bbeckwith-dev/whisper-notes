@@ -1,6 +1,8 @@
 import re
 from dataclasses import dataclass
 
+import anthropic
+
 
 @dataclass
 class ParsedResponse:
@@ -111,3 +113,22 @@ def compose_output(parsed: ParsedResponse, raw_text: str | None) -> str:
     if raw_text is not None:
         parts.extend(["", "---", "", "## Raw Transcription", "", raw_text])
     return "\n".join(parts) + "\n"
+
+
+def format_with_claude(raw_text: str, system_prompt: str, model_id: str) -> str:
+    """Call Claude API with streaming, return full response text."""
+    client = anthropic.Anthropic()
+
+    chunks = []
+    with client.messages.stream(
+        model=model_id,
+        max_tokens=4096,
+        system=system_prompt,
+        messages=[{"role": "user", "content": raw_text}],
+    ) as stream:
+        for text in stream.text_stream:
+            print(text, end="", flush=True)
+            chunks.append(text)
+
+    print()
+    return "".join(chunks).strip()
