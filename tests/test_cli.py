@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from main import build_parser
 
 
@@ -9,6 +11,13 @@ def test_cli_default_args():
     assert args.claude_model == "sonnet"  # changed from haiku
     assert args.force is False
     assert args.no_format is False
+    assert args.output_dir == Path("processed")
+
+
+def test_cli_output_dir_custom():
+    parser = build_parser()
+    args = parser.parse_args(["test.m4a", "--output-dir", "out"])
+    assert args.output_dir == Path("out")
 
 
 def test_cli_force_flag():

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from unittest.mock import MagicMock, patch
 from whisper_notes.format import (
@@ -47,9 +49,14 @@ def test_compose_output_audio_includes_raw():
         medium="audio",
         body="## Summary\nTest summary\n\n## Cleaned Transcription\nCleaned content",
     )
-    output = compose_output(parsed, raw_text="raw whisper output")
+    output = compose_output(
+        parsed,
+        raw_text="raw whisper output",
+        source_path=Path("/abs/recordings/voice001.m4a"),
+    )
     assert output.startswith("---\n")
     assert "title: test-note" in output
+    assert "source: /abs/recordings/voice001.m4a" in output
     # vault stripped from frontmatter
     fm_section = output.split("---")[1]
     assert "vault" not in fm_section
@@ -66,8 +73,11 @@ def test_compose_output_document_no_raw():
         medium="document",
         body="## Summary\nTest\n\n## Cleaned Transcription\nContent",
     )
-    output = compose_output(parsed, raw_text=None)
+    output = compose_output(
+        parsed, raw_text=None, source_path=Path("/abs/notes.txt")
+    )
     assert "## Raw Transcription" not in output
+    assert "source: /abs/notes.txt" in output
 
 
 def test_format_with_claude_returns_response(sample_claude_response):

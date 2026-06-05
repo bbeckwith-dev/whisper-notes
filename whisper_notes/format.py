@@ -1,5 +1,6 @@
 import re
 from dataclasses import dataclass
+from pathlib import Path
 
 import anthropic
 
@@ -98,8 +99,14 @@ def parse_response(response: str) -> ParsedResponse:
     )
 
 
-def compose_output(parsed: ParsedResponse, raw_text: str | None) -> str:
-    """Compose final markdown output (frontmatter without vault + body + optional raw)."""
+def compose_output(
+    parsed: ParsedResponse, raw_text: str | None, source_path: Path
+) -> str:
+    """Compose final markdown output (frontmatter without vault + body + optional raw).
+
+    `source_path` is recorded in the frontmatter as a precise pointer back to the
+    original file, so a note can be traced to its source without touching it.
+    """
     frontmatter = (
         f"---\n"
         f"title: {parsed.title}\n"
@@ -107,6 +114,7 @@ def compose_output(parsed: ParsedResponse, raw_text: str | None) -> str:
         f"processed: {parsed.processed}\n"
         f"status: raw\n"
         f"medium: {parsed.medium}\n"
+        f"source: {source_path}\n"
         f"---"
     )
     parts = [frontmatter, "", parsed.body]

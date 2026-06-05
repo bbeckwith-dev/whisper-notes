@@ -61,6 +61,16 @@ def test_collect_skips_processed_dir(tmp_path):
     assert result.supported[0].path.name == "a.m4a"
 
 
+def test_collect_skips_custom_output_dir(tmp_path):
+    (tmp_path / "a.m4a").touch()
+    out = tmp_path / "my-notes"
+    out.mkdir()
+    (out / "note.md").write_text("already processed")
+    result = collect_files(tmp_path, skip_dir_names={"my-notes"})
+    assert len(result.supported) == 1
+    assert result.supported[0].path.name == "a.m4a"
+
+
 def test_date_from_folder_name(tmp_path):
     folder = tmp_path / "2026-03-21"
     folder.mkdir()

@@ -29,21 +29,3 @@ def write_processed(title: str, content: str, output_dir: Path) -> Path:
             _atomic_write(path, content)
             return path
         n += 1
-
-
-def write_archival(
-    source_path: Path, title: str, content: str
-) -> tuple[Path, Path]:
-    """Write archival .md next to source and rename source to match title.
-
-    Returns (md_path, new_source_path).
-    """
-    parent = source_path.parent
-    md_path = parent / f"{title}.md"
-    _atomic_write(md_path, content)
-
-    new_source = parent / f"{title}{source_path.suffix}"
-    if new_source != source_path:
-        source_path.rename(new_source)
-
-    return md_path, new_source

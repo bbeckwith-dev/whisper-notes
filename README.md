@@ -46,6 +46,9 @@ uv run main.py recording.m4a --no-format
 
 # Reprocess files that were already processed
 uv run main.py recordings/ --force
+
+# Write notes to a directory other than ./processed
+uv run main.py recordings/ --output-dir ~/obsidian-intake
 ```
 
 When processing a directory, you'll see a preview of what will be processed before confirming:
@@ -64,7 +67,7 @@ Files that have already been processed are automatically skipped on subsequent r
 
 ## Output
 
-Processed files are written to a `processed/` directory with structured frontmatter:
+Processed files are written to the output directory (default `processed/`, set with `--output-dir`), mirroring the input's subfolder layout so each note lines up with its original. **The input tree is never modified** — nothing is written beside your sources and originals are never renamed. Each note carries a `source:` field in its frontmatter pointing back to the exact original file:
 
 ```markdown
 ---
@@ -73,6 +76,7 @@ date: 2026-03-21
 processed: 2026-03-21T14:32:00
 status: raw
 medium: audio
+source: /Users/you/recordings/2026-01/voice001.m4a
 ---
 
 ## Summary
@@ -94,13 +98,11 @@ i want to increase my squat to like 300 lbs by the end of the quarter
 um for deadlifts im going to focus on form over weight for now...
 ```
 
-For audio files, an archival copy of the markdown is also written next to the source audio, and the audio file is renamed to match the generated title.
-
-For text documents, the source file is left untouched (no archival copy, no rename).
+Originals are the source of truth, so a run never touches them: no markdown is written beside a source, and no file is renamed — for audio and documents alike. Traceability is provided three redundant ways instead: the `source:` frontmatter field (a precise pointer), the mirrored output subfolders (locations line up), and the `_index.md` row.
 
 ### Index
 
-Each run updates `processed/_index.md` — a table tracking all processed files, their source paths, dates, and vault assignments. Unsupported files found during collection are listed separately.
+Each run updates `_index.md` at the root of the output directory — a table tracking all processed files, their source paths, dates, and vault assignments. Unsupported files found during collection are listed separately.
 
 ## Vault categorization
 

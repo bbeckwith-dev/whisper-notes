@@ -29,8 +29,15 @@ class CollectedFiles:
 SKIP_DIRS = {"processed"}
 
 
-def collect_files(input_path: Path) -> CollectedFiles:
-    """Collect supported and unsupported files from a path."""
+def collect_files(
+    input_path: Path, skip_dir_names: set[str] | None = None
+) -> CollectedFiles:
+    """Collect supported and unsupported files from a path.
+
+    `skip_dir_names` adds to SKIP_DIRS so a run pointed at a parent containing
+    its own (possibly custom-named) output dir won't re-ingest generated notes.
+    """
+    skip = SKIP_DIRS | (skip_dir_names or set())
     if input_path.is_file():
         entry = _classify_file(input_path)
         if isinstance(entry, FileEntry):
@@ -43,7 +50,7 @@ def collect_files(input_path: Path) -> CollectedFiles:
         if f.is_symlink() or not f.is_file():
             continue
         # Skip files inside output directories
-        if SKIP_DIRS & {p.name for p in f.relative_to(input_path).parents}:
+        if skip & {p.name for p in f.relative_to(input_path).parents}:
             continue
         entry = _classify_file(f)
         if isinstance(entry, FileEntry):

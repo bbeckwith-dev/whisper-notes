@@ -10,7 +10,7 @@ from whisper_notes.format import (
     format_with_claude,
     parse_response,
 )
-from whisper_notes.output import write_archival, write_processed
+from whisper_notes.output import write_processed
 from whisper_notes.readers import read_document
 
 
@@ -31,10 +31,20 @@ def transcribe(audio_path: Path, model) -> str:
     return result["text"].strip()
 
 
+def mirror_subpath(input_root: Path, source_path: Path) -> Path:
+    """Relative subdirectory of source_path under input_root (Path('.') if none).
+
+    Used to mirror the input layout under the output dir so generated notes line
+    up with their originals — without ever writing into the input tree.
+    """
+    return source_path.resolve().relative_to(input_root.resolve()).parent
+
+
 def process_file(
     entry: FileEntry,
     config: dict,
     output_dir: Path,
+    input_root: Path,
     whisper_model: str,
     claude_model_id: str,
     config_path: Path | None = None,
@@ -67,15 +77,15 @@ def process_file(
 
     # Compose output (audio includes raw transcription, documents don't)
     include_raw = raw_text if entry.medium == "audio" else None
-    content = compose_output(parsed, raw_text=include_raw)
+    content = compose_output(
+        parsed, raw_text=include_raw, source_path=entry.path.resolve()
+    )
 
-    # Write to processed/
-    processed_path = write_processed(parsed.title, content, output_dir)
+    # Write to the mirrored subdirectory under output_dir. Nothing is ever
+    # written into the input tree — the source is the source of truth.
+    dest_dir = output_dir / mirror_subpath(input_root, entry.path)
+    processed_path = write_processed(parsed.title, content, dest_dir)
     print(f"Saved: {processed_path}")
-
-    # Archival copy (audio only — documents left untouched)
-    if entry.medium == "audio":
-        write_archival(entry.path, parsed.title, content)
 
     return ProcessResult(
         processed_path=processed_path,
@@ -91,6 +101,7 @@ def process_batch(
     files: list[FileEntry],
     config: dict,
     output_dir: Path,
+    input_root: Path,
     whisper_model: str,
     claude_model_id: str,
     config_path: Path | None = None,
@@ -109,6 +120,7 @@ def process_batch(
             entry=entry,
             config=config,
             output_dir=output_dir,
+            input_root=input_root,
             whisper_model=whisper_model,
             claude_model_id=claude_model_id,
             config_path=config_path,
@@ -116,6 +128,33 @@ def process_batch(
         )
         results.append(result)
     return results
+
+
+def transcribe_raw_only(
+    files: list[FileEntry],
+    input_root: Path,
+    output_dir: Path,
+    whisper_model: str,
+) -> list[Path]:
+    """Transcribe audio to raw markdown under output_dir only (no Claude).
+
+    Writes nothing into the input tree — each note lands in the mirrored
+    subdirectory under output_dir, with collision handling via write_processed.
+    """
+    import whisper
+
+    print(f"Loading Whisper model '{whisper_model}'...")
+    model = whisper.load_model(whisper_model)
+
+    written = []
+    for entry in files:
+        raw = transcribe(entry.path, model)
+        dest_dir = output_dir / mirror_subpath(input_root, entry.path)
+        content = f"# {entry.path.stem}\n\n{raw}\n"
+        path = write_processed(entry.path.stem, content, dest_dir)
+        print(f"Saved: {path}")
+        written.append(path)
+    return written
 
 
 def show_preview(files: list[FileEntry], skip_count: int = 0) -> None:
